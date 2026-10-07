@@ -33,3 +33,10 @@ SELECT
     longitude
 
 FROM nyc_311_raw;
+
+ALTER TABLE nyc_311_cleaned
+ADD COLUMN resolution_hours NUMERIC;
+
+UPDATE nyc_311_cleaned
+SET resolution_hours =
+    EXTRACT(EPOCH FROM (closed_at - created_at)) / 3600.0;
