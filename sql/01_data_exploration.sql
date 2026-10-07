@@ -64,3 +64,38 @@ SELECT
 FROM nyc_311_raw
 GROUP BY status
 ORDER BY requests DESC;
+
+--Checking Closed Date earlier than Created Date
+SELECT COUNT(*) AS invalid_resolution_dates
+FROM nyc_311_raw
+WHERE
+    closed_date IS NOT NULL
+    AND TO_TIMESTAMP(closed_date, 'MM/DD/YYYY HH12:MI:SS AM')
+        < TO_TIMESTAMP(created_date, 'MM/DD/YYYY HH12:MI:SS AM');
+
+SELECT
+    unique_key,
+    created_date,
+    closed_date,
+    agency,
+    problem,
+    status,
+    borough
+FROM nyc_311_raw
+WHERE
+    closed_date IS NOT NULL
+    AND TO_TIMESTAMP(closed_date, 'MM/DD/YYYY HH12:MI:SS AM')
+        < TO_TIMESTAMP(created_date, 'MM/DD/YYYY HH12:MI:SS AM')
+ORDER BY
+    TO_TIMESTAMP(created_date, 'MM/DD/YYYY HH12:MI:SS AM');
+
+SELECT
+    agency,
+    COUNT(*) AS invalid_records
+FROM nyc_311_raw
+WHERE
+    closed_date IS NOT NULL
+    AND TO_TIMESTAMP(closed_date, 'MM/DD/YYYY HH12:MI:SS AM')
+        < TO_TIMESTAMP(created_date, 'MM/DD/YYYY HH12:MI:SS AM')
+GROUP BY agency
+ORDER BY invalid_records DESC;
