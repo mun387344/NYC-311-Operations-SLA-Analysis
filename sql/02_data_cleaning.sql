@@ -97,3 +97,17 @@ FROM nyc_311_cleaned
 WHERE resolution_hours = 0
 GROUP BY status
 ORDER BY zero_hour_requests DESC;
+
+SELECT
+    unique_key,
+    created_at,
+    closed_at,
+    resolution_hours,
+    agency,
+    problem,
+    status,
+    borough
+FROM nyc_311_cleaned
+WHERE resolution_hours = 0
+ORDER BY created_at
+LIMIT 20;
