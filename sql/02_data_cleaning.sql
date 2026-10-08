@@ -111,3 +111,135 @@ FROM nyc_311_cleaned
 WHERE resolution_hours = 0
 ORDER BY created_at
 LIMIT 20;
+
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(*) FILTER (WHERE due_date IS NULL) AS missing_due_date,
+    COUNT(*) FILTER (
+        WHERE due_date IS NOT NULL
+    ) AS non_missing_due_date
+FROM nyc_311_raw;
+
+SELECT
+    due_date
+FROM nyc_311_raw
+WHERE due_date IS NOT NULL
+LIMIT 20;
+
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(*) FILTER (WHERE due_date IS NULL) AS missing_due_date,
+    COUNT(*) FILTER (
+        WHERE due_date IS NOT NULL
+    ) AS available_due_date,
+    COUNT(*) FILTER (
+        WHERE due_date IS NOT NULL
+        AND TO_TIMESTAMP(due_date, 'MM/DD/YYYY HH12:MI:SS AM') IS NULL
+    ) AS invalid_due_date
+FROM nyc_311_raw;
+
+SELECT
+    MIN(created_at) AS earliest_created,
+    MAX(created_at) AS latest_created,
+
+    MIN(
+        TO_TIMESTAMP(due_date, 'MM/DD/YYYY HH12:MI:SS AM')
+    ) AS earliest_due,
+
+    MAX(
+        TO_TIMESTAMP(due_date, 'MM/DD/YYYY HH12:MI:SS AM')
+    ) AS latest_due
+FROM nyc_311_cleaned
+WHERE due_date IS NOT NULL;
+
+SELECT
+    COUNT(*) AS due_before_created
+FROM nyc_311_cleaned
+WHERE
+    due_date IS NOT NULL
+    AND TO_TIMESTAMP(due_date, 'MM/DD/YYYY HH12:MI:SS AM')
+        < created_at;
+
+SELECT
+    COUNT(*) AS closed_requests,
+    
+    COUNT(*) FILTER (
+        WHERE due_date IS NOT NULL
+    ) AS closed_with_due_date,
+
+    COUNT(*) FILTER (
+        WHERE
+            due_date IS NOT NULL
+            AND closed_at <= TO_TIMESTAMP(
+                due_date,
+                'MM/DD/YYYY HH12:MI:SS AM'
+            )
+    ) AS closed_by_due_date,
+
+    COUNT(*) FILTER (
+        WHERE
+            due_date IS NOT NULL
+            AND closed_at > TO_TIMESTAMP(
+                due_date,
+                'MM/DD/YYYY HH12:MI:SS AM'
+            )
+    ) AS closed_after_due_date
+
+FROM nyc_311_cleaned
+WHERE
+    created_at::date BETWEEN '2025-10-11' AND '2025-11-29'
+    AND status = 'Closed'
+    AND closed_at IS NOT NULL
+    AND resolution_hours >= 0;
+
+SELECT
+    COUNT(*) AS total_scope_requests,
+
+    COUNT(*) FILTER (
+        WHERE due_date IS NOT NULL
+    ) AS with_due_date,
+
+    COUNT(*) FILTER (
+        WHERE due_date IS NULL
+    ) AS without_due_date
+
+FROM nyc_311_cleaned
+WHERE created_at::date BETWEEN '2025-10-11' AND '2025-11-29';
+
+SELECT
+    status,
+    COUNT(*) AS requests,
+    COUNT(*) FILTER (
+        WHERE due_date IS NOT NULL
+    ) AS with_due_date,
+    COUNT(*) FILTER (
+        WHERE due_date IS NULL
+    ) AS without_due_date
+FROM nyc_311_cleaned
+WHERE created_at::date BETWEEN '2025-10-11' AND '2025-11-29'
+GROUP BY status
+ORDER BY requests DESC;
+
+SELECT
+    unique_key,
+    created_at,
+    due_date,
+    status,
+    agency,
+    problem
+FROM nyc_311_cleaned
+WHERE
+    created_at::date BETWEEN '2025-10-11' AND '2025-11-29'
+    AND due_date IS NOT NULL
+LIMIT 20;
+
+SELECT
+    due_date,
+    COUNT(*) AS requests
+FROM nyc_311_cleaned
+WHERE
+    created_at::date BETWEEN '2025-10-11' AND '2025-11-29'
+    AND due_date IS NOT NULL
+GROUP BY due_date
+ORDER BY requests DESC
+LIMIT 20;
